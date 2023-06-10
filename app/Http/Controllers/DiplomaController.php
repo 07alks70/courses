@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Diploma;
+use App\Models\Graphic;
+use App\Models\Hypothese;
 use App\Models\Technology;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -22,8 +24,8 @@ class DiplomaController extends Controller
             'name' => 'required|string',
             'course.id' => 'required|exists:App\Models\Course,id',
             'user.id' => 'required|exists:App\Models\User,id',
-            'graphics' => 'required|string',
-            'hypotheses' => 'required|string',
+            'graphics.*.name' => 'required|string',
+            'hypotheses.*.name' => 'required|string',
             'technologies.*.name' => 'required|string'
         ]);
 
@@ -34,8 +36,6 @@ class DiplomaController extends Controller
 
         $diploma = new Diploma();
         $diploma->name = $request->json()->get('name');
-        $diploma->graphics = $request->json()->get('graphics');
-        $diploma->hypotheses = $request->json()->get('hypotheses');
         $diploma->user_id = User::find($request->json()->get('user')['id'])->id;
         $diploma->course_id = Course::find($request->json()->get('course')['id'])->id;
         $diploma->save();
@@ -46,6 +46,20 @@ class DiplomaController extends Controller
             $technology->description = $tech['description'];
             $technology->diploma_id = $diploma->id;
             $technology->save();
+        }
+
+        foreach ($request->json()->get('hypotheses') as $hyp){
+            $hypothese = new Hypothese();
+            $hypothese->name = $hyp['name'];
+            $hypothese->diploma_id = $diploma->id;
+            $hypothese->save();
+        }
+
+        foreach ($request->json()->get('graphics') as $rg){
+            $graphic = new Graphic();
+            $graphic->name = $rg['name'];
+            $graphic->diploma_id = $diploma->id;
+            $graphic->save();
         }
 
         return Response::json($diploma->id, 200)
@@ -69,6 +83,8 @@ class DiplomaController extends Controller
         }
 
         $diploma->technologies;
+        $diploma->hypotheses;
+        $diploma->graphics;
         Response::json($diploma, 200)
             ->send();
     }
